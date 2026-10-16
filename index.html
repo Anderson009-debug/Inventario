@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventario de Coctelería</title>
+<style>
+  :root {
+    --verde: #4caf7d;
+    --verde-oscuro: #2e7d5b;
+    --naranja: #ff9f43;
+    --rojo: #e74c3c;
+    --fondo: #f4f8f6;
+    --tarjeta: #ffffff;
+    --texto: #2c3e50;
+    --gris: #7f8c8d;
+    --borde: #e0e6e3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: #1a1a1a;
+    color: var(--texto);
+    padding: 24px;
+    min-height: 100vh;
+  }
+  /* Fondo fijo compatible con celulares (background-attachment: fixed falla en iOS/Android) */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: -1;
+    background-image: linear-gradient(rgba(0,0,0,0.12), rgba(0,0,0,0.12)),
+      url("https://hatchostinatoproject.com/wp-content/uploads/2021/11/el-arte-de-la-cocteleria.jpg");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+  }
+  header {
+    text-align: center;
+    margin: 0 auto 28px auto;
+    max-width: 1000px;
+    background: rgba(255,255,255,0.88);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  header h1 {
+    margin: 0;
+    color: var(--verde-oscuro);
+    font-size: 1.8rem;
+  }
+  header p {
+    color: var(--gris);
+    margin-top: 4px;
+  }
+
+  /* ---------- LOGIN ---------- */
+  #vistaLogin {
+    max-width: 380px;
+    margin: 60px auto;
+    background: var(--tarjeta);
+    border-radius: 12px;
+    padding: 28px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid var(--borde);
+  }
+  #vistaLogin h2 {
+    margin-top: 0;
+    color: var(--verde-oscuro);
+    text-align: center;
+  }
+  #formLogin { display: flex; flex-direction: column; gap: 12px; }
+  #formLogin label { font-size: 0.85rem; color: var(--gris); }
+  #formLogin input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  #formLogin button {
+    margin-top: 6px;
+    background: var(--verde);
+    color: white;
+    border: none;
+    padding: 11px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  #formLogin button:hover { background: var(--verde-oscuro); }
+  #errorLogin {
+    color: var(--rojo);
+    font-size: 0.85rem;
+    text-align: center;
+    min-height: 18px;
+  }
+
+  /* ---------- APP ---------- */
+  #vistaApp { display: none; }
+  .barra-superior {
+    max-width: 1000px;
+    margin: 0 auto 16px auto;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .btn-salir {
+    background: var(--rojo);
+    border: none;
+    padding: 9px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .btn-salir:hover { background: #c0392b; }
+
+  .contenedor {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 20px;
+  }
+  @media (max-width: 800px) {
+    .contenedor { grid-template-columns: 1fr; }
+  }
+  .tarjeta {
+    background: var(--tarjeta);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid var(--borde);
+  }
+  .tarjeta h2 {
+    margin-top: 0;
+    font-size: 1.15rem;
+    color: var(--verde-oscuro);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  form.agregar { display: flex; flex-direction: column; gap: 10px; }
+  form.agregar label {
+    font-size: 0.85rem;
+    color: var(--gris);
+    margin-bottom: 2px;
+    display: block;
+  }
+  form.agregar input, form.agregar select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  form.agregar button {
+    margin-top: 6px;
+    background: var(--verde);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  form.agregar button:hover { background: var(--verde-oscuro); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--borde);
+  }
+  th { color: var(--gris); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
+  .cantidad-controles {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cantidad-controles button {
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--borde);
+    background: var(--fondo);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .fila-baja { background: #fdecea; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #e8f5ee;
+    color: var(--verde-oscuro);
+  }
+  .btn-borrar {
+    background: none;
+    border: none;
+    color: var(--rojo);
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  .lista-pedido {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .lista-pedido li {
+    background: #fff4e8;
+    border-left: 4px solid var(--naranja);
+    padding: 10px 12px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+  }
+  .lista-pedido .falta {
+    color: var(--rojo);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .vacio {
+    color: var(--gris);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 14px 0;
+  }
+  .full-width { grid-column: 1 / -1; }
+
+  .acciones-whatsapp {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+  .btn-whatsapp {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-whatsapp:hover { background: #1ebe5a; }
+  .btn-whatsapp:disabled {
+    background: #b7e6c9;
+    cursor: not-allowed;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="vistaLogin">
+  <h2>🍸 Iniciar sesión</h2>
+  <form id="formLogin">
+    <div>
+      <label for="correo">Correo</label>
+      <input type="email" id="correo" placeholder="correo" required>
+    </div>
+    <div>
+      <label for="clave">Contraseña</label>
+      <input type="password" id="clave" placeholder="Contraseña" required>
+    </div>
+    <p id="errorLogin"></p>
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="vistaApp">
+  <header>
+    <h1>🍸 Inventario de Coctelería</h1>
+    <p>Gestiona el stock de licores, vinos, sirups, enbotellados y frutas</p>
+  </header>
+
+  <div class="barra-superior">
+    <button class="btn-salir" id="btnSalir">Cerrar sesión</button>
+  </div>
+
+  <div class="contenedor">
+
+    <div class="tarjeta">
+      <h2>➕ Agregar producto</h2>
+      <form class="agregar" id="formAgregar">
+        <div>
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" placeholder="Ej: Fresa" required>
+        </div>
+        <div>
+          <label for="categoria">Categoría</label>
+          <select id="categoria">
+            <option value="Licores">Licores</option>
+            <option value="Vinos">Vinos</option>
+            <option value="Sirups">Sirups</option>
+            <option value="Enbotellados">Enbotellados</option>
+            <option value="Frutas">Frutas</option>
+          </select>
+        </div>
+        <div>
+          <label for="cantidad">Cantidad actual</label>
+          <input type="number" id="cantidad" min="0" value="0" required>
+        </div>
+        <div>
+          <label for="minimo">Mínimo requerido</label>
+          <input type="number" id="minimo" min="0" value="1" required>
+        </div>
+        <button type="submit">Agregar al inventario</button>
+      </form>
+    </div>
+
+    <div class="tarjeta">
+      <h2> Inventario cocteleria lomas</h2>
+      <div id="contenedorTabla">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Categoría</th>
+              <th>Cantidad</th>
+              <th>Mínimo</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tablaProductos"></tbody>
+        </table>
+        <p class="vacio" id="mensajeVacio" style="display:none;">No hay productos registrados todavía.</p>
+        <div class="acciones-whatsapp">
+          <button class="btn-whatsapp" id="btnEnviarInventario">📤 Enviar Inventario</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tarjeta full-width">
+      <h2> Pedido cocteleria lomas</h2>
+      <ul class="lista-pedido" id="listaPedido"></ul>
+      <p class="vacio" id="mensajePedidoVacio" style="display:none;">Todo el inventario está en buen nivel 🎉</p>
+      <div class="acciones-whatsapp">
+        <button class="btn-whatsapp" id="btnEnviarPedidos">📤 Enviar Pedidos</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ---------- CREDENCIALES ---------- */
+const CORREO_VALIDO = "Katherine@inventario.com";
+const CLAVE_VALIDA = "kathe123";
+
+const CLAVE_ALMACEN = "inventario_cocteleria_v1";
+let productos = [];
+
+/* ---------- LOGIN ---------- */
+document.getElementById("formLogin").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const correo = document.getElementById("correo").value.trim();
+  const clave = document.getElementById("clave").value;
+  const error = document.getElementById("errorLogin");
+
+  if (correo === CORREO_VALIDO && clave === CLAVE_VALIDA) {
+    error.textContent = "";
+    mostrarApp();
+  } else {
+    error.textContent = "Correo o contraseña incorrectos.";
+  }
+});
+
+document.getElementById("btnSalir").addEventListener("click", function() {
+  document.getElementById("vistaApp").style.display = "none";
+  document.getElementById("vistaLogin").style.display = "block";
+  document.getElementById("formLogin").reset();
+  document.getElementById("errorLogin").textContent = "";
+});
+
+function mostrarApp() {
+  document.getElementById("vistaLogin").style.display = "none";
+  document.getElementById("vistaApp").style.display = "block";
+  cargarProductos();
+}
+
+/* ---------- PERSISTENCIA ---------- */
+function cargarProductos() {
+  try {
+    const datos = localStorage.getItem(CLAVE_ALMACEN);
+    productos = datos ? JSON.parse(datos) : [];
+  } catch (e) {
+    productos = [];
+    console.error("Error cargando inventario:", e);
+  }
+  renderizar();
+}
+
+function guardarProductos() {
+  try {
+    localStorage.setItem(CLAVE_ALMACEN, JSON.stringify(productos));
+  } catch (e) {
+    console.error("Error guardando inventario:", e);
+    alert("No se pudo guardar el inventario en este navegador.");
+  }
+}
+
+/* ---------- RENDER ---------- */
+function renderizar() {
+  const tbody = document.getElementById("tablaProductos");
+  const mensajeVacio = document.getElementById("mensajeVacio");
+  tbody.innerHTML = "";
+
+  mensajeVacio.style.display = productos.length === 0 ? "block" : "none";
+
+  productos.forEach(p => {
+    const bajo = p.cantidad < p.minimo;
+    const fila = document.createElement("tr");
+    fila.className = bajo ? "fila-baja" : "";
+    fila.innerHTML = `
+      <td>${p.nombre}</td>
+      <td><span class="badge">${p.categoria}</span></td>
+      <td>
+        <div class="cantidad-controles">
+          <button onclick="cambiarCantidad('${p.id}', -1)">−</button>
+          <span>${p.cantidad}</span>
+          <button onclick="cambiarCantidad('${p.id}', 1)">+</button>
+        </div>
+      </td>
+      <td>
+        <input type="number" min="0" value="${p.minimo}"
+          style="width:60px;padding:4px;border:1px solid var(--borde);border-radius:6px;"
+          onchange="cambiarMinimo('${p.id}', this.value)">
+      </td>
+      <td><button class="btn-borrar" onclick="borrarProducto('${p.id}')" title="Eliminar">🗑️</button></td>
+    `;
+    tbody.appendChild(fila);
+  });
+
+  renderizarPedido();
+}
+
+function renderizarPedido() {
+  const lista = document.getElementById("listaPedido");
+  const mensajePedidoVacio = document.getElementById("mensajePedidoVacio");
+  lista.innerHTML = "";
+
+  const necesitanPedido = productos.filter(p => p.cantidad < p.minimo);
+
+  mensajePedidoVacio.style.display = necesitanPedido.length === 0 ? "block" : "none";
+
+  necesitanPedido.forEach(p => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span><strong>${p.nombre}</strong> · ${p.categoria} — tiene ${p.cantidad}, mínimo ${p.minimo}</span>
+      <span class="falta">Faltan ${p.minimo - p.cantidad}</span>
+    `;
+    lista.appendChild(li);
+  });
+}
+
+/* ---------- ACCIONES ---------- */
+function cambiarCantidad(id, delta) {
+  const p = productos.find(x => x.id === id);
+  if (!p) return;
+  p.cantidad = Math.max(0, p.cantidad + delta);
+  guardarProductos();
+  renderizar();
+}
+
+function cambiarMinimo(id, valor) {
+  const p = productos.find(x => x.id === id);
+  if (!p) return;
+  p.minimo = Math.max(0, parseInt(valor) || 0);
+  guardarProductos();
+  renderizar();
+}
+
+function borrarProducto(id) {
+  productos = productos.filter(x => x.id !== id);
+  guardarProductos();
+  renderizar();
+}
+
+document.getElementById("formAgregar").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const nombre = document.getElementById("nombre").value.trim();
+  const categoria = document.getElementById("categoria").value;
+  const cantidad = parseInt(document.getElementById("cantidad").value) || 0;
+  const minimo = parseInt(document.getElementById("minimo").value) || 0;
+
+  if (!nombre) return;
+
+  productos.push({
+    id: Date.now().toString(),
+    nombre,
+    categoria,
+    cantidad,
+    minimo
+  });
+
+  guardarProductos();
+  renderizar();
+  this.reset();
+  document.getElementById("cantidad").value = 0;
+  document.getElementById("minimo").value = 1;
+});
+
+/* ---------- ENVÍO POR WHATSAPP ---------- */
+const GRUPO_WHATSAPP = "https://chat.whatsapp.com/KsFiNiY2qLw6ysgOjIfNKh";
+
+// Los enlaces de grupo de WhatsApp no permiten texto prellenado,
+// así que se copia el mensaje y se abre el grupo para pegarlo.
+async function abrirWhatsApp(mensaje) {
+  try {
+    await navigator.clipboard.writeText(mensaje);
+  } catch (e) {
+    const t = document.createElement("textarea");
+    t.value = mensaje;
+    document.body.appendChild(t);
+    t.select();
+    document.execCommand("copy");
+    t.remove();
+  }
+  alert("Mensaje copiado. Se abrirá el grupo de WhatsApp: pega el mensaje (mantén presionado → Pegar) y envíalo.");
+  window.open(GRUPO_WHATSAPP, "_blank");
+}
+
+document.getElementById("btnEnviarInventario").addEventListener("click", function() {
+  if (productos.length === 0) {
+    alert("No hay productos en el inventario para enviar.");
+    return;
+  }
+
+  let mensaje = "*Inventario de cocteleria lomas*\n\n";
+  productos.forEach(p => {
+    mensaje += `• ${p.nombre} - ${p.categoria} - Cantidad: ${p.cantidad}\n`;
+  });
+
+  abrirWhatsApp(mensaje);
+});
+
+document.getElementById("btnEnviarPedidos").addEventListener("click", function() {
+  const necesitanPedido = productos.filter(p => p.cantidad < p.minimo);
+
+  if (necesitanPedido.length === 0) {
+    alert("No hay productos por debajo del mínimo. No es necesario hacer pedido.");
+    return;
+  }
+
+  let mensaje = "*Pedido cocteleria lomas*\n\n";
+  necesitanPedido.forEach(p => {
+    const faltante = p.minimo - p.cantidad;
+    mensaje += `• ${p.nombre} - ${p.categoria} - Pedir: ${faltante}\n`;
+  });
+
+  abrirWhatsApp(mensaje);
+});
+</script>
+
+</body>
+</html>
